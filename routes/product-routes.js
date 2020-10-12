@@ -1,54 +1,51 @@
 const express = require('express');
 const Product = require('../models/ProductModel');
 const authController = require('../controller/authController');
+const productController = require('../controller/productController');
+const multer = require('multer');
 
 const router = express.Router();
 
-router.use(authController.isAuth);
-router.get('/product-list', async (req, res, next) => {
-  try {
-    console.log(req.user);
-    const product = await Product.find();
-    res.status(200).json({
-      status: 'success',
-      result: product.length,
-      message: product,
-    });
-  } catch (error) {
-    next(error);
-  }
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/product-img/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    if (ext !== '.jpg' || ext !== '.png' || ext !== '.jfif') {
+      return cb(
+        res.staus(400).end('only jpg, png and jfif are allowed'),
+        false
+      );
+    }
+    cb(null, true);
+  },
 });
 
-router.post('/create-product', async (req, res, next) => {
-  try {
-    const product = await Product.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      message: product,
-    });
-  } catch (error) {
-    next(error);
-  }
+const upload = multer({ storage }).single('image');
+
+router.get('/product-list', productController.productList);
+
+router.post('/create-product', productController.createProduct);
+
+router.patch('/:id/update-product', productController.updateProduct);
+
+router.patch('/:id/upload-img', upload, async (req, res, next) => {
+  const product = await Product.findByIdAndUpdate(
+    { _id: req.params.id },
+    { productImg: `/uploads/product-img/${req.file.filename}` },
+    { new: true }
+  );
+
+  res.status(201).json({
+    status: 'success',
+    message: product,
+  });
 });
-router.patch('/:id/update-product', async (req, res, next) => {
-  try {
-    const product = await Product.findByIdAndUpdate(
-      { _id: req.params.id },
-      req.body,
-      {
-        new: true,
-      }
-    );
-    res.status(201).json({
-      status: 'success',
-      message: product,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-router.delete('/delete-product', (req, res) => {
-  res.send('home');
-});
+
+router.delete('/delete-product', productController.deleteProduct);
 
 module.exports = router;

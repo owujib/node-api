@@ -24,6 +24,25 @@ const userSchema = new mongoose.Schema({
     max: 15,
     required: [true, 'please provide a password'],
   },
+  cart: {
+    items: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+  },
+  createdAt: {
+    type: Date,
+    defualt: Date.now(),
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -33,6 +52,36 @@ userSchema.pre('save', async function (next) {
     next(error);
   }
 });
+
+userSchema.methods.addToCart = function (product) {
+  /**Check if any product exist in my cart if not return -1*/
+  const cartItemIndex = this.cart.items.findIndex((cart) => {
+    return cart.product._id.toString() === product._id.toString();
+  });
+  console.log(cartItemIndex);
+
+  /**add 1 to qty */
+  let newQuantity = 1;
+  const updateCartItems = [...this.cart.items];
+  console.log('updateCart', updateCartItems);
+
+  if (cartItemIndex >= 0) {
+    console.log(cartItemIndex);
+    newQuantity = this.cart.items[cartItemIndex].quantity + 1;
+    updateCartItems[cartItemIndex].quantity = newQuantity;
+  } else {
+    updateCartItems.push({
+      product,
+      quantity: newQuantity,
+    });
+  }
+  const updatedCart = {
+    items: updateCartItems,
+  };
+  this.cart = updatedCart;
+
+  return this.save();
+};
 
 userSchema.methods.correctPassword = async function (
   inputPassword,

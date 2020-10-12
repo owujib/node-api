@@ -2,46 +2,18 @@ const express = require('express');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-const User = require('../models/UserModel');
+const authController = require('../controller/authController');
+const userController = require('../controller/userController');
 
 const router = express.Router();
 
-router.post('/register', async (req, res, next) => {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json({
-      status: 'success',
-      message: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/register', authController.register);
 
-router.post('/login', async (req, res, next) => {
-  try {
-    /**check if user exists */
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) {
-      return next(new Error('User does not exists please register'));
-    }
+router.post('/login', authController.login);
 
-    /**check for correct password */
-    if (!(await user.correctPassword(req.body.password, user.password))) {
-      return next(new Error('incorrect credentials'));
-    }
+router.post('/:id/cart', authController.isAuth, userController.addCart);
 
-    /**send auth token */
-    let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-
-    res.header('auth_token', token).status(200).json({
-      status: 'success',
-      message: { user, token },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get('/profile', authController.isAuth, userController.userProfile);
 
 /** authorization */
 
