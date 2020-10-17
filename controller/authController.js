@@ -55,3 +55,24 @@ exports.isAuth = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updatePassword = async (req, res, next) => {
+  try {
+    const user = await User.findById({ _id: req.user._id }).select('password'); //you can exclude or include document fields to exclude use the minus sign -password
+    if (
+      !(await user.correctPassword(req.body.currentpassword, user.password))
+    ) {
+      return next(new AppError('you current password is wrong', 401));
+    }
+
+    user.password = req.body.password;
+
+    await user.save();
+    return res.status(201).json({
+      status: 'success',
+      message: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -83,6 +83,19 @@ userSchema.methods.addToCart = function (product) {
   return this.save();
 };
 
+userSchema.methods.removeFromCart = function (product) {
+  const updatedCartItems = this.cart.items.filter((items) => {
+    return item.product._id.toString() !== product._id.toString();
+  });
+  this.cart.items = updatedCartItems;
+  return this.save();
+};
+
+userSchema.methods.emptyCart = function () {
+  this.cart.items = [];
+  return this.save();
+};
+
 userSchema.methods.correctPassword = async function (
   inputPassword,
   userPassword

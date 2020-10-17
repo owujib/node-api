@@ -11,9 +11,11 @@ router.post('/register', authController.register);
 
 router.post('/login', authController.login);
 
-router.post('/:id/cart', authController.isAuth, userController.addCart);
-
-router.get('/profile', authController.isAuth, userController.userProfile);
+router.use(authController.isAuth);
+router.post('/:id/cart', userController.addCart);
+router.get('/profile', userController.userProfile);
+router.patch('/update/profile', userController.updateUserProfile);
+router.patch('/update/password', authController.updatePassword);
 
 /** authorization */
 
