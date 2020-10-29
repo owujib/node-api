@@ -13,6 +13,17 @@ exports.productList = async (req, res, next) => {
     next(error);
   }
 };
+exports.singleProduct = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    res.status(200).json({
+      status: 'success',
+      message: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 exports.createProduct = async (req, res, next) => {
   try {
